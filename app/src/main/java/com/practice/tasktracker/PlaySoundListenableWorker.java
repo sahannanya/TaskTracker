@@ -8,6 +8,7 @@ import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
 import android.util.Log;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -74,8 +75,12 @@ public class PlaySoundListenableWorker extends ListenableWorker {
                         .getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
 
                 //displaying the first match
-                if (matches != null)
-                    Log.d(TAGm,"doWork :: onResults :"+matches.get(0));
+                if (matches != null){
+                    String capturedWords = matches.get(0);
+                    Log.d(TAGm,"doWork :: onResults : "+capturedWords);
+                    Toast.makeText(getApplicationContext(),capturedWords,Toast.LENGTH_SHORT).show();
+
+                }
             }
 
             @Override
