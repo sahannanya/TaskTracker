@@ -2,28 +2,17 @@ package com.practice.tasktracker;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-import androidx.work.PeriodicWorkRequest;
-import androidx.work.WorkManager;
 
-import android.Manifest;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.media.MediaRecorder;
-import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
-import java.io.File;
-import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity {
     static private final String TAGm="MainActivity";
@@ -45,7 +34,6 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         btnStartAlarm = findViewById(R.id.btnStartAlarm);
         btnCancelAlarm = findViewById(R.id.btnCancelAlarm);
-
 
         //alarm logic
         alarmManager = (AlarmManager)this.getSystemService(Context.ALARM_SERVICE);

@@ -36,11 +36,11 @@ public class Util {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             alarmManager.setExactAndAllowWhileIdle(
                     AlarmManager.RTC_WAKEUP,
-                    incrementTimeByGivenDuration(2,0).getTimeInMillis() ,
+                    incrementTimeByGivenDuration(15,0).getTimeInMillis() ,
                     pendingIntent);
 
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            alarmManager.setExact(AlarmManager.RTC_WAKEUP, 0, pendingIntent);
+            alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, 0,1000*15, pendingIntent);
         } else {
             alarmManager.set(AlarmManager.RTC_WAKEUP, 0, pendingIntent);
         }
