@@ -11,8 +11,8 @@ import java.util.List;
 public class DataViewModel
         extends AndroidViewModel {
 
-    private DataRepository mDataRepository;
-    private LiveData<List<CapturedDataEntity>> mListLiveData;
+    private final DataRepository mDataRepository;
+    private final LiveData<List<CapturedDataEntity>> mListLiveData;
 
     public DataViewModel(@NonNull Application application) {
         super(application);

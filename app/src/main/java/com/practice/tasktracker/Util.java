@@ -24,11 +24,11 @@ import java.util.TimeZone;
 
 public class Util {
     static private final String TAGm="Util";
-    static public final String ALARM_RECIEVER_PACKAGE_NAME = "com.practice.tasktracker.MY_ALARM_FINISHED";
-    static public final String ALARM_CANCEL_RECIEVER_PACKAGE_NAME = "com.practice.tasktracker.ALARM_CANCEL";
+    static public final String ALARM_RECEIVER_PACKAGE_NAME = "com.practice.tasktracker.MY_ALARM_FINISHED";
+    static public final String ALARM_CANCEL_RECEIVER_PACKAGE_NAME = "com.practice.tasktracker.ALARM_CANCEL";
     static public final String RECORDED_DIRECTORY = Environment.getExternalStorageDirectory().getAbsolutePath() + "/recordedTasks";
-    static public final int PROMPT_INTERVAL_IN_MINS = 2;
-    static public final int PROMPT_DURATION_IN_MILISEC = 10 * 1000;
+    static public final int PROMPT_INTERVAL_IN_MINUTES = 3;
+    static public final int PROMPT_DURATION_IN_MILLI_SEC = 10 * 1000;
 
     public static void playBeepToAlert(){
         Log.d(TAGm, "playBeepToAlert() called");
@@ -38,8 +38,8 @@ public class Util {
 
     public static void startAlarm(AlarmManager alarmManager, PendingIntent pendingIntent, long time){
         Log.d(TAGm, "startAlarm() called. ");
-        long timeInMilliSec = (time == 0) ? incrementTimeByGivenDuration(PROMPT_INTERVAL_IN_MINS,0).getTimeInMillis(): time;
-        Log.d(TAGm, "startAlarm() :: next alarm in::"+ timeInMilliSec + " mili secs");
+        long timeInMilliSec = (time == 0) ? incrementTimeByGivenDuration(PROMPT_INTERVAL_IN_MINUTES,0).getTimeInMillis(): time;
+        Log.d(TAGm, "startAlarm() :: next alarm in::"+ timeInMilliSec + " milli secs");
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             AlarmManager.AlarmClockInfo alarmClockInfo = new AlarmManager.AlarmClockInfo(
                     timeInMilliSec,
@@ -47,14 +47,14 @@ public class Util {
 
 //            alarmManager.setAlarmClock(
 //                    AlarmManager.RTC_WAKEUP,
-//                    incrementTimeByGivenDuration(PROMPT_INTERVAL_IN_MINS,0).getTimeInMillis() ,
+//                    incrementTimeByGivenDuration(PROMPT_INTERVAL_IN_MINUTES,0).getTimeInMillis() ,
 //                    pendingIntent);
             alarmManager.setAlarmClock(alarmClockInfo,pendingIntent);
 
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, 0,1000 * 60 * PROMPT_INTERVAL_IN_MINS, pendingIntent);
+            alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, timeInMilliSec,1000 * 60 * PROMPT_INTERVAL_IN_MINUTES, pendingIntent);
         } else {
-            alarmManager.set(AlarmManager.RTC_WAKEUP, 0, pendingIntent);
+            alarmManager.set(AlarmManager.RTC_WAKEUP, timeInMilliSec, pendingIntent);
         }
     }
 
@@ -86,7 +86,8 @@ public class Util {
                 Log.d(TAGm, "stopRecording() :: catch block");
 
                 myAudioRecorder.release();
-                myAudioRecorder = null;
+                myAudioRecorder = null;  // Do not delete. This is required as sometimes even though we are not returning this,
+                                        // GC doesn't collect it unless it's null. Which causes issues in next recording.
             }
         Log.d(TAGm, "stopRecording() :: Audio Recorder stopped");
     }
@@ -109,19 +110,24 @@ public class Util {
         File file= new File(RECORDED_DIRECTORY);
         Log.d(TAGm, "file path::" + RECORDED_DIRECTORY);
 
+        MediaRecorder  myAudioRecorder = null;
+        boolean isDirectoryCreated = file.exists();
 
-        if (!file.exists()){
-            file.mkdirs();
+        if (!isDirectoryCreated) {
+            isDirectoryCreated= file.mkdirs();
         }
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
-        sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
-        MediaRecorder  myAudioRecorder = new MediaRecorder();
-        myAudioRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
-        myAudioRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
-        myAudioRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
-        myAudioRecorder.setAudioEncodingBitRate(16);
-        myAudioRecorder.setAudioSamplingRate(44100);
-        myAudioRecorder.setOutputFile(file.getAbsolutePath()+ "/recording"+sdf.format(new Date())+".mp3");
+        if(isDirectoryCreated){
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm", Locale.US);
+            sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
+            myAudioRecorder = new MediaRecorder();
+            myAudioRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+            myAudioRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
+            myAudioRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
+            myAudioRecorder.setAudioEncodingBitRate(16);
+            myAudioRecorder.setAudioSamplingRate(44100);
+            myAudioRecorder.setOutputFile(file.getAbsolutePath()+ "/recording"+sdf.format(new Date())+".mp3");
+        }
+
 
         return myAudioRecorder;
     }
@@ -137,10 +143,10 @@ public class Util {
         return true;
     }
 
-    public static long getStartAlarmTimeInMiliSec(Context context){
+    public static long getStartAlarmTimeInMilliSec(Context context){
         //alarm logic
         SharedPreferences sharedPref = context.getSharedPreferences(
-                context.getString(R.string.alarm_prefrence_file_key), Context.MODE_PRIVATE);
+                context.getString(R.string.alarm_preference_file_key), Context.MODE_PRIVATE);
         final Calendar calendar = Calendar.getInstance();
         calendar.set(Calendar.HOUR_OF_DAY, sharedPref.getInt(context.getString(R.string.preference_start_at_hour),0));
         calendar.set(Calendar.MINUTE, sharedPref.getInt(context.getString(R.string.preference_start_at_min),0));
@@ -150,10 +156,10 @@ public class Util {
         return calendar.getTimeInMillis();
     }
 
-    public static long getEndAlarmTimeInMiliSec(Context context){
+    public static long getEndAlarmTimeInMilliSec(Context context){
         //alarm logic
         SharedPreferences sharedPref = context.getSharedPreferences(
-                context.getString(R.string.alarm_prefrence_file_key), Context.MODE_PRIVATE);
+                context.getString(R.string.alarm_preference_file_key), Context.MODE_PRIVATE);
         final Calendar calendar = Calendar.getInstance();
         calendar.set(Calendar.HOUR_OF_DAY, sharedPref.getInt(context.getString(R.string.preference_end_at_hour),0));
         calendar.set(Calendar.MINUTE, sharedPref.getInt(context.getString(R.string.preference_end_at_min),0));

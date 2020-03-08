@@ -19,17 +19,13 @@ import android.util.Log;
 
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
-import androidx.lifecycle.ViewModelProviders;
 
 import com.practice.tasktracker.db.CapturedDataDao;
 import com.practice.tasktracker.db.CapturedDataEntity;
-import com.practice.tasktracker.db.DataRepository;
-import com.practice.tasktracker.db.DataViewModel;
 import com.practice.tasktracker.db.TaskTrackerRoomDB;
 
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -40,10 +36,8 @@ public class RecordAndResetAlarmService extends IntentService {
     PendingIntent pendingIntent;
     SpeechRecognizer mSpeechRecognizer;
     Intent mSpeechRecognizerIntent;
-    boolean isDataUsable;
     private CapturedDataDao mDataDao;
     ExecutorService mExecutor;
-//    Date currentTime;
 
 
     public RecordAndResetAlarmService() {
@@ -67,28 +61,34 @@ public class RecordAndResetAlarmService extends IntentService {
     @Override
     protected void onHandleIntent(@Nullable Intent intent) {
         Log.d(TAGm, "onHandleIntent() called. ");
-        Bundle extras = intent.getExtras();
-        if(extras == null) {
-            Log.d(TAGm,"intent extra null ! abort");
-        } else {
-            String from = (String) extras.get("from");
-            if(from.equalsIgnoreCase("normal")){
-                if ((ContextCompat.checkSelfPermission(getBaseContext(), Manifest.permission.RECORD_AUDIO)
-                        != PackageManager.PERMISSION_GRANTED)) {
-                    Log.d(TAGm, "onHandleIntent() :: Permission missing. Prompt user to give permission");
-                    Intent i = new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + BuildConfig.APPLICATION_ID));
-                    startActivity(i);
-                }else{
-                    Log.d(TAGm, "onHandleIntent()  else. ");
-                    captureData();
+
+        if(intent != null){
+            Bundle extras = intent.getExtras();
+            if(extras == null) {
+                Log.d(TAGm,"intent extra null ! abort");
+            } else {
+                String from = (String) extras.get("from");
+                if(from != null && from.equalsIgnoreCase("normal")){
+                    if ((ContextCompat.checkSelfPermission(getBaseContext(), Manifest.permission.RECORD_AUDIO)
+                            != PackageManager.PERMISSION_GRANTED)) {
+                        Log.d(TAGm, "onHandleIntent() :: Permission missing. Prompt user to give permission");
+                        Intent i = new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + BuildConfig.APPLICATION_ID));
+                        startActivity(i);
+                    }else{
+                        Log.d(TAGm, "onHandleIntent()  else. ");
+                        captureData();
+                    }
+                }else if(from.equalsIgnoreCase("rebooted")){
+                    modifyAlarm("rebooted");
+                }else if(from.equalsIgnoreCase("cancelAlarm")){
+                    modifyAlarm("cancel");
+                    modifyAlarm("resetToNextDay");
                 }
-            }else if(from.equalsIgnoreCase("rebooted")){
-                modifyAlarm("rebooted");
-            }else if(from.equalsIgnoreCase("cancelAlarm")){
-                modifyAlarm("cancel");
-                modifyAlarm("resetToNextDay");
             }
+        }else{
+            Log.d(TAGm,"intent is null !! abort");
         }
+
 
     }
 
@@ -110,7 +110,7 @@ public class RecordAndResetAlarmService extends IntentService {
             public void run() {
 
                 if(mSpeechRecognizer == null){
-                    Log.d(TAGm,"initalizing speech recognizer");
+                    Log.d(TAGm,"init speech recognizer");
                     mSpeechRecognizer = SpeechRecognizer.createSpeechRecognizer(getApplicationContext());
                     mSpeechRecognizer.setRecognitionListener(new RecognitionListener() {
                         @Override
@@ -174,7 +174,6 @@ public class RecordAndResetAlarmService extends IntentService {
                                     break;
                             }
                             Log.d(TAGm,"Error :: " +message);
-                            isDataUsable = false;
                             if(mSpeechRecognizer!=null){
 //                                mSpeechRecognizer.stopListening();
 //                                mSpeechRecognizer.cancel();
@@ -183,15 +182,15 @@ public class RecordAndResetAlarmService extends IntentService {
                             }
                             mSpeechRecognizer = null;
                             final MediaRecorder mr = Util.createMediaSource();
-                            Util.startRecording(mr);
-                            new Handler().postDelayed(new Runnable() {
-                                @Override
-                                public void run() {
-                                Util.stopRecording(mr);
-                                insertItemInDB(Calendar.getInstance().getTime().toString()," Captured audio recording" +
-                                        "");
-
-                                }}, Util.PROMPT_DURATION_IN_MILISEC);
+                            if(mr != null ){
+                                Util.startRecording(mr);
+                                new Handler().postDelayed(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        Util.stopRecording(mr);
+                                        insertItemInDB(Calendar.getInstance().getTime().toString()," Captured audio recording");
+                                    }}, Util.PROMPT_DURATION_IN_MILLI_SEC);
+                            }
                         }
 
                         @Override
@@ -202,7 +201,6 @@ public class RecordAndResetAlarmService extends IntentService {
                             if (matches != null){
                                 Log.d(TAGm,"doWork :: onResults :"+matches.get(0));
                                 insertItemInDB(Calendar.getInstance().getTime().toString(),matches.get(0));
-                                isDataUsable = true;
 //                            mSpeechRecognizer.stopListening();
                             }
                         }
@@ -237,7 +235,7 @@ public class RecordAndResetAlarmService extends IntentService {
 //                            mSpeechRecognizer.stopListening();
 //                            Log.d(TAGm,"doWork :: stopListening() called at:: "+ Calendar.getInstance().getTime());
                             modifyAlarm("reset");
-                        }}, Util.PROMPT_DURATION_IN_MILISEC);
+                        }}, Util.PROMPT_DURATION_IN_MILLI_SEC);
             }
         };
         mainHandler.post(myRunnable);
@@ -248,11 +246,11 @@ public class RecordAndResetAlarmService extends IntentService {
         Log.d(TAGm, "onHandleIntent() ::resetting alarm ");
         alarmManager = (AlarmManager)getApplicationContext().getSystemService(Context.ALARM_SERVICE);
         Intent intentTest = new Intent(getBaseContext(), MyBroadCastReceiver.class);
-        intentTest.setAction(Util.ALARM_RECIEVER_PACKAGE_NAME);
+        intentTest.setAction(Util.ALARM_RECEIVER_PACKAGE_NAME);
         pendingIntent = PendingIntent.getBroadcast(getApplicationContext(), 0, intentTest, 0);
         switch (action){
             case "rebooted" : {
-                Util.startAlarm(alarmManager,pendingIntent,Util.getStartAlarmTimeInMiliSec(this));
+                Util.startAlarm(alarmManager,pendingIntent,Util.getStartAlarmTimeInMilliSec(this));
                 break;
             }
             case "cancel" : {
@@ -260,7 +258,7 @@ public class RecordAndResetAlarmService extends IntentService {
                 break;
             }
             case "resetToNextDay" : {
-                Util.startAlarm(alarmManager, pendingIntent, Util.getStartAlarmTimeInMiliSec(this) + 86400000L);
+                Util.startAlarm(alarmManager, pendingIntent, Util.getStartAlarmTimeInMilliSec(this) + 86400000L);
                 break;
             }
             case "reset" : {

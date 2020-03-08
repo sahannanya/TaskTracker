@@ -1,6 +1,6 @@
 package com.practice.tasktracker.db;
 
-import androidx.annotation.NonNull;
+//import androidx.annotation.NonNull;
 import androidx.room.Entity;
 import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
@@ -16,7 +16,6 @@ public class CapturedDataEntity {
     }
 
     @PrimaryKey(autoGenerate = true)
-    @NonNull
     private long id;
     private String timeStamp;
     private String capturedDetails;

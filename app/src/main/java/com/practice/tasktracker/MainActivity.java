@@ -17,7 +17,9 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.TimePicker;
@@ -39,42 +41,40 @@ public class MainActivity extends AppCompatActivity {
     String timeSelected="";
     TextView alarm_time;
     SharedPreferences sharedPref;
-
-    //Remove if UI not needed
-    private RecyclerView recyclerView;
-    private List<CapturedDataEntity> mTasksList;
-    private DataViewModel mDataViewModel;
-    private TasksAdapter mTasksAdapter;
-
-
-
     public static final int MULTIPLE_PERMISSIONS = 1;
-    String[] PERMISSIONS = {
+    final String[] PERMISSIONS = {
             android.Manifest.permission.RECORD_AUDIO,
             android.Manifest.permission.READ_EXTERNAL_STORAGE,
             android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
             android.Manifest.permission.RECEIVE_BOOT_COMPLETED,
     };
 
+    //Remove if UI not needed
+    private RecyclerView recyclerView;
+    private static List<CapturedDataEntity> mTasksList;
+    private TasksAdapter mTasksAdapter;
+    //////////
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_main_constraint);
         btnTimePickerStart = findViewById(R.id.btnStartAlarm);
         btnTimePickerEnd = findViewById(R.id.btnCancelAlarm);
         scheduleAlarm = findViewById(R.id.schedule_now);
         alarm_time = findViewById(R.id.alarm_time);
 
         this.sharedPref = getSharedPreferences(
-                getString(R.string.alarm_prefrence_file_key), Context.MODE_PRIVATE);
+                getString(R.string.alarm_preference_file_key), Context.MODE_PRIVATE);
 
         timeSelected = "Track from "
                 +sharedPref.getInt(getString(R.string.preference_start_at_hour),0)+":"
-                +sharedPref.getInt(getString(R.string.preference_start_at_min),0)+":"
+                +sharedPref.getInt(getString(R.string.preference_start_at_min),0)
                 +" to "
                 +sharedPref.getInt(getString(R.string.preference_end_at_hour),0)+":"
-                +sharedPref.getInt(getString(R.string.preference_end_at_min),0)+":";
+                +sharedPref.getInt(getString(R.string.preference_end_at_min),0);
 
+        alarm_time.setText(timeSelected);
 
 
         btnTimePickerStart.setOnClickListener(new View.OnClickListener() {
@@ -106,13 +106,13 @@ public class MainActivity extends AppCompatActivity {
         recyclerView = findViewById(R.id.rv_data);
         recyclerView.setHasFixedSize(true);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        mDataViewModel = ViewModelProviders.of(this).get(DataViewModel.class);
+        DataViewModel mDataViewModel = ViewModelProviders.of(this).get(DataViewModel.class);
         final Observer<List<CapturedDataEntity>> tasksListObserver = new Observer<List<CapturedDataEntity>>() {
             @Override
             public void onChanged(@Nullable final List<CapturedDataEntity> updatedList) {
                 if (mTasksList == null) {
                     mTasksList = updatedList;
-                    mTasksAdapter = new TasksAdapter(mTasksList);
+                    mTasksAdapter = new TasksAdapter();
                     recyclerView.setAdapter(mTasksAdapter);
                 } else {
                     DiffUtil.DiffResult result = DiffUtil.calculateDiff(new DiffUtil.Callback() {
@@ -124,20 +124,21 @@ public class MainActivity extends AppCompatActivity {
 
                         @Override
                         public int getNewListSize() {
-                            return updatedList.size();
+                            if(updatedList!=null)
+                                return updatedList.size();
+                            else return 0;
                         }
 
                         @Override
                         public boolean areItemsTheSame(int oldItemPosition, int newItemPosition) {
-                            return mTasksList.get(oldItemPosition).getTimeStamp()==
-                                    updatedList.get(newItemPosition).getTimeStamp();
+                            return mTasksList.get(oldItemPosition).getTimeStamp() .equals(updatedList.get(newItemPosition).getTimeStamp());
                         }
 
                         @Override
                         public boolean areContentsTheSame(int oldItemPosition, int newItemPosition) {
-                            CapturedDataEntity oldFav = mTasksList.get(oldItemPosition);
-                            CapturedDataEntity newFav = updatedList.get(newItemPosition);
-                            return oldFav.equals(newFav);
+                            CapturedDataEntity oldTask = mTasksList.get(oldItemPosition);
+                            CapturedDataEntity newTask = updatedList.get(newItemPosition);
+                            return oldTask.equals(newTask);
                         }
                     });
                     result.dispatchUpdatesTo(mTasksAdapter);
@@ -145,34 +146,63 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         };
+
+
         mDataViewModel.getAllData().observe(this, tasksListObserver);
 
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
+    // For user testing without logcat, remove recycler and below if not needed
+    public static class TasksAdapter extends RecyclerView.Adapter<TasksAdapter.TasksViewHolder> {
+
+        @Override
+        public TasksViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+            View itemView = LayoutInflater.from(parent.getContext()).inflate(R.layout.captured_item, parent, false);
+            return new TasksViewHolder(itemView);
+        }
+
+        @Override
+        public void onBindViewHolder(TasksViewHolder holder, int position) {
+            CapturedDataEntity favourites = mTasksList.get(position);
+            holder.mTimeStamp.setText(favourites.getTimeStamp());
+            holder.mDetails.setText(favourites.getCapturedDetails());
+        }
+
+        @Override
+        public int getItemCount() {
+            return mTasksList.size();
+        }
+
+        class TasksViewHolder extends RecyclerView.ViewHolder {
+
+            final TextView mTimeStamp;
+            final TextView mDetails;
+
+            TasksViewHolder(View itemView) {
+                super(itemView);
+                mTimeStamp = itemView.findViewById(R.id.tv_capture_item_time);
+                mDetails = itemView.findViewById(R.id.tv_capture_item_details);
+            }
+        }
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, String permissionsList[], int[] grantResults) {
-        switch (requestCode) {
-            case MULTIPLE_PERMISSIONS :{
-                boolean flag = true;
-                int permissionCount = 0;
-                if (grantResults.length > 0) {
-                    while(permissionCount <= 3){
-                        if(grantResults[permissionCount] == PackageManager.PERMISSION_DENIED){
-                            flag = flag && false;
-                        }
-                        permissionCount++;
+    public void onRequestPermissionsResult(int requestCode, String[] permissionsList, int[] grantResults) {
+        if(requestCode == MULTIPLE_PERMISSIONS){
+            boolean flag = true;
+            int permissionCount = 0;
+            if (grantResults.length > 0) {
+                while(permissionCount <= 3){
+                    if(grantResults[permissionCount] == PackageManager.PERMISSION_DENIED){
+                        flag = flag && false;
                     }
+                    permissionCount++;
                 }
-                if(flag){
-                    startAlarm();
-                }else{
-                    Toast.makeText(MainActivity.this,getString(R.string.permission_error),Toast.LENGTH_LONG).show();
-                }
+            }
+            if(flag){
+                startAlarm();
+            }else{
+                Toast.makeText(MainActivity.this,getString(R.string.permission_error),Toast.LENGTH_LONG).show();
             }
         }
     }
@@ -201,13 +231,13 @@ public class MainActivity extends AppCompatActivity {
                     SharedPreferences.Editor editor = sharedPref.edit();
                     editor.putInt(getString(R.string.preference_start_at_hour), selectedHour);
                     editor.putInt(getString(R.string.preference_start_at_min), selectedMinute);
-                    editor.commit();
+                    editor.apply();
                 }else{
                     timeSelected = timeSelected+" To " + selectedHour+":"+selectedMinute +am_pm;
                     SharedPreferences.Editor editor = sharedPref.edit();
                     editor.putInt(getString(R.string.preference_end_at_hour), selectedHour);
                     editor.putInt(getString(R.string.preference_end_at_min), +selectedMinute);
-                    editor.commit();
+                    editor.apply();
                     alarm_time.setText(timeSelected);
                 }
 
@@ -228,54 +258,25 @@ public class MainActivity extends AppCompatActivity {
 
             alarmManager = (AlarmManager)this.getSystemService(Context.ALARM_SERVICE);
             Intent intent = new Intent(this, MyBroadCastReceiver.class);
-            intent.setAction(Util.ALARM_RECIEVER_PACKAGE_NAME);
+            intent.setAction(Util.ALARM_RECEIVER_PACKAGE_NAME);
             pendingIntent = PendingIntent.getBroadcast(this, 0, intent, 0);
-            Util.startAlarm(alarmManager,pendingIntent,Util.getStartAlarmTimeInMiliSec(this));
-
+            Util.startAlarm(alarmManager,pendingIntent,Util.getStartAlarmTimeInMilliSec(this));
+            Toast.makeText(this,getString(R.string.started_tracking),Toast.LENGTH_SHORT).show();
             //Also set alarm to cancel alarms at selected time
             Log.d(TAGm, "startAlarm()::  stopping  last  alarm for the day");
-            intent.setAction(Util.ALARM_CANCEL_RECIEVER_PACKAGE_NAME);
+            intent.setAction(Util.ALARM_CANCEL_RECEIVER_PACKAGE_NAME);
             pendingIntent = PendingIntent.getBroadcast(this, 0, intent, 0);
-            Util.startAlarm(alarmManager,pendingIntent,Util.getEndAlarmTimeInMiliSec(this));
+            Util.startAlarm(alarmManager,pendingIntent,Util.getEndAlarmTimeInMilliSec(this));
 
         }
     }
+
 }
 
 
-//    // For user testing without logcat, remove recycler and below if not needed
-//    public class TasksAdapter extends RecyclerView.Adapter<TasksAdapter.TasksViewHolder> {
-//
-//        @Override
-//        public TasksViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-//            View itemView = LayoutInflater.from(parent.getContext()).inflate(R.layout.captured_item, parent, false);
-//            return new TasksViewHolder(itemView);
-//        }
-//
-//        @Override
-//        public void onBindViewHolder(TasksViewHolder holder, int position) {
-//            CapturedDataEntity favourites = mTasksList.get(position);
-//            holder.mTimeStamp.setText(favourites.getTimeStamp());
-//            holder.mDetails.setText(favourites.getCapturedDetails());
-//        }
-//
-//        @Override
-//        public int getItemCount() {
-//            return mTasksList.size();
-//        }
-//
-//        class TasksViewHolder extends RecyclerView.ViewHolder {
-//
-//            TextView mTimeStamp;
-//            TextView mDetails;
-//
-//            TasksViewHolder(View itemView) {
-//                super(itemView);
-//                mTimeStamp = itemView.findViewById(R.id.tv_capture_item_time);
-//                mDetails = itemView.findViewById(R.id.tv_capture_item_details);
-//            }
-//        }
-//    }
-//
-//}
+
+
+
+
+
 

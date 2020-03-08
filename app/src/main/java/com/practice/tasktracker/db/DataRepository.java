@@ -8,12 +8,12 @@ import androidx.lifecycle.LiveData;
 import java.util.List;
 
 public class DataRepository {
-    private CapturedDataDao mDataDao;
-    private LiveData<List<CapturedDataEntity>> mAllData;
+    private final CapturedDataDao mDataDao;
+    private final LiveData<List<CapturedDataEntity>> mAllData;
 
     public DataRepository(Application application) {
-        TaskTrackerRoomDB dataRoomdbase = TaskTrackerRoomDB.getDatabase(application);
-        this.mDataDao = dataRoomdbase.CapturedDataDao();
+        TaskTrackerRoomDB tasksRoomDatabase = TaskTrackerRoomDB.getDatabase(application);
+        this.mDataDao = tasksRoomDatabase.CapturedDataDao();
         this.mAllData = mDataDao.getAllData();
     }
 
@@ -26,7 +26,7 @@ public class DataRepository {
     }
 
     private static class insertAsyncTask extends AsyncTask<CapturedDataEntity, Void, Void> {
-        private CapturedDataDao mAsyncTaskDao;
+        private final CapturedDataDao mAsyncTaskDao;
         insertAsyncTask(CapturedDataDao dao) {
             mAsyncTaskDao = dao;
         }

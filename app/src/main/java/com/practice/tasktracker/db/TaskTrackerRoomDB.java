@@ -23,9 +23,4 @@ public abstract class TaskTrackerRoomDB
         return INSTANCE;
     }
 
-    public static void destroyInstance() {
-        INSTANCE = null;
-    }
-
-
 }

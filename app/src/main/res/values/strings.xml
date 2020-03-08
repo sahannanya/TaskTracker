@@ -1,5 +1,5 @@
 <resources>
-    <string name="alarm_prefrence_file_key">com.practice.tasktracker.ALARM_PREFRENCE_FILE_KEY</string>
+    <string name="alarm_preference_file_key">com.practice.tasktracker.ALARM_PREFERENCE_FILE_KEY</string>
     <string name="preference_start_at_hour">start_at_hour</string>
     <string name="preference_start_at_min">start_at_min</string>
     <string name="preference_end_at_hour">end_at_hour</string>
@@ -12,5 +12,5 @@
     <string name="end_tracking_at">End Tracking at</string>
     <string name="schedule_now">Schedule now</string>
     <string name="started_tracking">Started tracking tasks</string>
-    <string name="stopped_tracking">Stopped tracking tasks</string>
+<!--    <string name="stopped_tracking">Tracking will be stopped at</string>-->
 </resources>
