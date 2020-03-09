@@ -106,6 +106,7 @@ public class MainActivity extends AppCompatActivity {
         recyclerView = findViewById(R.id.rv_data);
         recyclerView.setHasFixedSize(true);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        recyclerView.setAdapter(null);
         DataViewModel mDataViewModel = ViewModelProviders.of(this).get(DataViewModel.class);
         final Observer<List<CapturedDataEntity>> tasksListObserver = new Observer<List<CapturedDataEntity>>() {
             @Override
@@ -224,16 +225,19 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onTimeSet(TimePicker timePicker, int selectedHour, int selectedMinute) {
                 Log.d(TAGm, "TimePickerDialog() called. ");
-                String am_pm = (selectedHour < 12) ? "AM" : "PM";
+//                String am_pm = (selectedHour < 12) ? "AM" : "PM";
 
                 if(pickerType.equals("from")){
-                    timeSelected = "Track from " + selectedHour+":"+selectedMinute +am_pm;
+                    timeSelected = "Track from " + selectedHour+":"+selectedMinute;
                     SharedPreferences.Editor editor = sharedPref.edit();
                     editor.putInt(getString(R.string.preference_start_at_hour), selectedHour);
                     editor.putInt(getString(R.string.preference_start_at_min), selectedMinute);
                     editor.apply();
+                    alarm_time.setText(timeSelected);
                 }else{
-                    timeSelected = timeSelected+" To " + selectedHour+":"+selectedMinute +am_pm;
+                    timeSelected = "Track from " +sharedPref.getInt(getString(R.string.preference_start_at_hour),0)+":"
+                            +sharedPref.getInt(getString(R.string.preference_start_at_min),0)
+                            +" to " +selectedHour+":"+selectedMinute;
                     SharedPreferences.Editor editor = sharedPref.edit();
                     editor.putInt(getString(R.string.preference_end_at_hour), selectedHour);
                     editor.putInt(getString(R.string.preference_end_at_min), +selectedMinute);

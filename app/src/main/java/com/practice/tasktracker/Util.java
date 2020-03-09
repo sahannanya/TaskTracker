@@ -26,8 +26,8 @@ public class Util {
     static private final String TAGm="Util";
     static public final String ALARM_RECEIVER_PACKAGE_NAME = "com.practice.tasktracker.MY_ALARM_FINISHED";
     static public final String ALARM_CANCEL_RECEIVER_PACKAGE_NAME = "com.practice.tasktracker.ALARM_CANCEL";
-    static public final String RECORDED_DIRECTORY = Environment.getExternalStorageDirectory().getAbsolutePath() + "/recordedTasks";
-    static public final int PROMPT_INTERVAL_IN_MINUTES = 3;
+    //    static public final String RECORDED_DIRECTORY = Environment.getExternalFilesDir().getAbsolutePath() + "/recordedTasks";
+    static public final int PROMPT_INTERVAL_IN_MINUTES = 10;
     static public final int PROMPT_DURATION_IN_MILLI_SEC = 10 * 1000;
 
     public static void playBeepToAlert(){
@@ -78,17 +78,17 @@ public class Util {
 
     public static void stopRecording(MediaRecorder myAudioRecorder){
         Log.d(TAGm, "stopRecording() called. ");
-            try {
-                Log.d(TAGm, "stopRecording() :: try block");
+        try {
+            Log.d(TAGm, "stopRecording() :: try block");
 
-                myAudioRecorder.stop();
-            } catch(RuntimeException stopException) {
-                Log.d(TAGm, "stopRecording() :: catch block");
+            myAudioRecorder.stop();
+        } catch(RuntimeException stopException) {
+            Log.d(TAGm, "stopRecording() :: catch block");
 
-                myAudioRecorder.release();
-                myAudioRecorder = null;  // Do not delete. This is required as sometimes even though we are not returning this,
-                                        // GC doesn't collect it unless it's null. Which causes issues in next recording.
-            }
+            myAudioRecorder.release();
+            myAudioRecorder = null;  // Do not delete. This is required as sometimes even though we are not returning this,
+            // GC doesn't collect it unless it's null. Which causes issues in next recording.
+        }
         Log.d(TAGm, "stopRecording() :: Audio Recorder stopped");
     }
 
@@ -104,17 +104,17 @@ public class Util {
         Log.d(TAGm, "startRecording() :: Audio Recorder startRecording");
     }
 
-    public static MediaRecorder createMediaSource(){
+    public static MediaRecorder createMediaSource(String filepath){
         Log.d(TAGm, "createMediaSource() called");
 //        String  file_path = Environment.getExternalStorageDirectory().getAbsolutePath() + "/recordedTasks";
-        File file= new File(RECORDED_DIRECTORY);
-        Log.d(TAGm, "file path::" + RECORDED_DIRECTORY);
+        File file= new File(filepath +  "/recordedTasks");
+        Log.d(TAGm, "file path::" + filepath +  "/recordedTasks");
 
         MediaRecorder  myAudioRecorder = null;
         boolean isDirectoryCreated = file.exists();
 
         if (!isDirectoryCreated) {
-            isDirectoryCreated= file.mkdirs();
+            isDirectoryCreated= file.mkdir();
         }
         if(isDirectoryCreated){
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm", Locale.US);

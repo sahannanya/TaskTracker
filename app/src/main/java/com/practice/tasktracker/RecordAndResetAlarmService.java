@@ -3,12 +3,17 @@ package com.practice.tasktracker;
 import android.Manifest;
 import android.app.AlarmManager;
 import android.app.IntentService;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.media.MediaRecorder;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -18,6 +23,7 @@ import android.speech.SpeechRecognizer;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
+import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
 
 import com.practice.tasktracker.db.CapturedDataDao;
@@ -29,6 +35,9 @@ import java.util.Calendar;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import static androidx.core.app.NotificationCompat.PRIORITY_DEFAULT;
+import static androidx.core.app.NotificationCompat.PRIORITY_MIN;
+
 
 public class RecordAndResetAlarmService extends IntentService {
     static private final String TAGm="RecordAndResetAlarmSer";
@@ -38,6 +47,7 @@ public class RecordAndResetAlarmService extends IntentService {
     Intent mSpeechRecognizerIntent;
     private CapturedDataDao mDataDao;
     ExecutorService mExecutor;
+    String filePath;
 
 
     public RecordAndResetAlarmService() {
@@ -47,6 +57,21 @@ public class RecordAndResetAlarmService extends IntentService {
     @Override
     public void onCreate() {
         super.onCreate();
+        filePath = getBaseContext().getExternalFilesDir(null).getAbsolutePath();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            CharSequence name = "task_tracker_service";
+            String description = "Record audio for task tracker";
+            int importance = NotificationManager.IMPORTANCE_DEFAULT;
+            NotificationChannel channel = new NotificationChannel("task_tracker_service", name, importance);
+            channel.setDescription(description);
+            NotificationManager notificationManager = getSystemService(NotificationManager.class);
+            notificationManager.createNotificationChannel(channel);
+            Notification notification = new Notification.Builder(this,"task_tracker_service")
+                        .setSmallIcon(R.mipmap.ic_launcher)
+                        .setCategory(Notification.CATEGORY_SERVICE)
+                        .build();
+            startForeground(101, notification);
+        }
         TaskTrackerRoomDB mDB = TaskTrackerRoomDB.getDatabase( this.getApplication() );
         mDataDao = mDB.CapturedDataDao();
         mExecutor = Executors.newSingleThreadExecutor();
@@ -181,7 +206,7 @@ public class RecordAndResetAlarmService extends IntentService {
 
                             }
                             mSpeechRecognizer = null;
-                            final MediaRecorder mr = Util.createMediaSource();
+                            final MediaRecorder mr = Util.createMediaSource(filePath);
                             if(mr != null ){
                                 Util.startRecording(mr);
                                 new Handler().postDelayed(new Runnable() {
@@ -227,15 +252,15 @@ public class RecordAndResetAlarmService extends IntentService {
                 Log.d(TAGm,"doWork :: started Listening() called at:: "+ Calendar.getInstance().getTime());
                 Log.d(TAGm,"doWork :: is this main thread::"+  (Looper.myLooper() == Looper.getMainLooper()));
                 mSpeechRecognizer.startListening(mSpeechRecognizerIntent);
-                    new Handler().postDelayed(new Runnable() {
-                        @Override
-                        public void run() {
-                            //do something
-                            Log.d(TAGm,"doWork :: is this main thread::"+  (Looper.myLooper() == Looper.getMainLooper()));
+                new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        //do something
+                        Log.d(TAGm,"doWork :: is this main thread::"+  (Looper.myLooper() == Looper.getMainLooper()));
 //                            mSpeechRecognizer.stopListening();
 //                            Log.d(TAGm,"doWork :: stopListening() called at:: "+ Calendar.getInstance().getTime());
-                            modifyAlarm("reset");
-                        }}, Util.PROMPT_DURATION_IN_MILLI_SEC);
+                        modifyAlarm("reset");
+                    }}, Util.PROMPT_DURATION_IN_MILLI_SEC);
             }
         };
         mainHandler.post(myRunnable);
@@ -267,6 +292,13 @@ public class RecordAndResetAlarmService extends IntentService {
             }
             default : break;
         }
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        Log.d(TAGm,"onDestroy() called");
+
     }
 }
 

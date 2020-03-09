@@ -43,11 +43,11 @@ dependencies {
     annotationProcessor "android.arch.lifecycle:compiler:1.1.1"
 
 
-    implementation 'com.facebook.stetho:stetho:1.5.1'
+//    implementation 'com.facebook.stetho:stetho:1.5.1'
 
     //for performance
-    debugImplementation 'com.squareup.leakcanary:leakcanary-android:1.5.4'
-    releaseImplementation 'com.squareup.leakcanary:leakcanary-android:1.5.4'
+//    debugImplementation 'com.squareup.leakcanary:leakcanary-android:1.5.4'
+//    releaseImplementation 'com.squareup.leakcanary:leakcanary-android:1.5.4'
 
 
 }
