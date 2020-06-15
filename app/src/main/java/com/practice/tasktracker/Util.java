@@ -11,6 +11,7 @@ import android.media.ToneGenerator;
 import android.os.Build;
 import android.os.Environment;
 import android.util.Log;
+import android.widget.Toast;
 
 import androidx.core.app.ActivityCompat;
 
@@ -80,13 +81,13 @@ public class Util {
         Log.d(TAGm, "stopRecording() called. ");
         try {
             Log.d(TAGm, "stopRecording() :: try block");
-
             myAudioRecorder.stop();
         } catch(RuntimeException stopException) {
             Log.d(TAGm, "stopRecording() :: catch block");
-
+            myAudioRecorder.stop();
+            myAudioRecorder.reset();
             myAudioRecorder.release();
-            myAudioRecorder = null;  // Do not delete. This is required as sometimes even though we are not returning this,
+            myAudioRecorder = null;// Do not delete. This is required as sometimes even though we are not returning this,
             // GC doesn't collect it unless it's null. Which causes issues in next recording.
         }
         Log.d(TAGm, "stopRecording() :: Audio Recorder stopped");
@@ -95,12 +96,16 @@ public class Util {
     public static void startRecording(MediaRecorder myAudioRecorder) {
         Log.d(TAGm, "startRecording() called. ");
         playBeepToAlert();
-        try {
-            myAudioRecorder.prepare();
-            myAudioRecorder.start();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+            try {
+                myAudioRecorder.prepare();
+                Log.d(TAGm, "startRecording() :: myAudioRecorder prepare is successful ");
+                myAudioRecorder.start();
+
+            } catch (IOException e) {
+                Log.e(TAGm, "startRecording() :: myAudioRecorder prepare failed ");
+
+                e.printStackTrace();
+            }
         Log.d(TAGm, "startRecording() :: Audio Recorder startRecording");
     }
 
@@ -126,6 +131,8 @@ public class Util {
             myAudioRecorder.setAudioEncodingBitRate(16);
             myAudioRecorder.setAudioSamplingRate(44100);
             myAudioRecorder.setOutputFile(file.getAbsolutePath()+ "/recording"+sdf.format(new Date())+".mp3");
+//            myAudioRecorder.setMaxDuration(3000);
+
         }
 
 
