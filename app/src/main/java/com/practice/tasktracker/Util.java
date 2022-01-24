@@ -168,5 +168,11 @@ public class Util {
 
         return calendar.getTimeInMillis();
     }
+
+    public static String convertTimeTo12Hour(int hour, int min){
+
+        String time = hour%12 + ":" + hour + " " + ((min>=12) ? "PM" : "AM");
+        return time;
+    }
 }
 

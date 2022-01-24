@@ -21,6 +21,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
@@ -31,15 +32,18 @@ import com.practice.tasktracker.db.DataViewModel;
 import java.util.Calendar;
 import java.util.List;
 
+import static com.practice.tasktracker.Util.convertTimeTo12Hour;
+
 
 public class MainActivity extends AppCompatActivity {
     static private final String TAGm="MainActivity";
 
-    Button btnTimePickerStart, btnTimePickerEnd, scheduleAlarm;
+    Button btnTimePickerStart, btnTimePickerEnd;
+    ImageButton scheduleAlarm;
     AlarmManager alarmManager;
     PendingIntent pendingIntent;
-    String timeSelected="";
-    TextView alarm_time;
+    TextView alarmStartTime;
+    TextView alarmEndTime;
     SharedPreferences sharedPref;
     public static final int MULTIPLE_PERMISSIONS = 1;
     final String[] PERMISSIONS = {
@@ -58,24 +62,22 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main_constraint);
-        btnTimePickerStart = findViewById(R.id.btnStartAlarm);
-        btnTimePickerEnd = findViewById(R.id.btnCancelAlarm);
-        scheduleAlarm = findViewById(R.id.schedule_now);
-        alarm_time = findViewById(R.id.alarm_time);
+        setContentView(R.layout.activity_main_new);
+        btnTimePickerStart = findViewById(R.id.editTextTimeStart);
+        btnTimePickerEnd = findViewById(R.id.editTextTimeEnd);
+        scheduleAlarm = findViewById(R.id.button_start_cancel);
+        alarmStartTime = findViewById(R.id.textview_start_time);
+        alarmEndTime = findViewById(R.id.textview_end_time);
 
         this.sharedPref = getSharedPreferences(
                 getString(R.string.alarm_preference_file_key), Context.MODE_PRIVATE);
+        int startHr = sharedPref.getInt(getString(R.string.preference_start_at_hour),0);
+        int startMin = sharedPref.getInt(getString(R.string.preference_start_at_min),0);
+        alarmStartTime.setText(convertTimeTo12Hour(startHr,startMin));
 
-        timeSelected = "Track from "
-                +sharedPref.getInt(getString(R.string.preference_start_at_hour),0)+":"
-                +sharedPref.getInt(getString(R.string.preference_start_at_min),0)
-                +" to "
-                +sharedPref.getInt(getString(R.string.preference_end_at_hour),0)+":"
-                +sharedPref.getInt(getString(R.string.preference_end_at_min),0);
-
-        alarm_time.setText(timeSelected);
-
+        int endHr = sharedPref.getInt(getString(R.string.preference_start_at_hour),0);
+        int endMin = sharedPref.getInt(getString(R.string.preference_start_at_min),0);
+        alarmEndTime.setText(convertTimeTo12Hour(endHr,endMin));
 
         btnTimePickerStart.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -225,24 +227,19 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onTimeSet(TimePicker timePicker, int selectedHour, int selectedMinute) {
                 Log.d(TAGm, "TimePickerDialog() called. ");
-//                String am_pm = (selectedHour < 12) ? "AM" : "PM";
 
                 if(pickerType.equals("from")){
-                    timeSelected = "Track from " + selectedHour+":"+selectedMinute;
                     SharedPreferences.Editor editor = sharedPref.edit();
                     editor.putInt(getString(R.string.preference_start_at_hour), selectedHour);
                     editor.putInt(getString(R.string.preference_start_at_min), selectedMinute);
                     editor.apply();
-                    alarm_time.setText(timeSelected);
+                    alarmStartTime.setText(convertTimeTo12Hour(selectedHour, selectedMinute));
                 }else{
-                    timeSelected = "Track from " +sharedPref.getInt(getString(R.string.preference_start_at_hour),0)+":"
-                            +sharedPref.getInt(getString(R.string.preference_start_at_min),0)
-                            +" to " +selectedHour+":"+selectedMinute;
                     SharedPreferences.Editor editor = sharedPref.edit();
                     editor.putInt(getString(R.string.preference_end_at_hour), selectedHour);
                     editor.putInt(getString(R.string.preference_end_at_min), +selectedMinute);
                     editor.apply();
-                    alarm_time.setText(timeSelected);
+                    alarmEndTime.setText(convertTimeTo12Hour(selectedHour, selectedMinute));
                 }
 
 

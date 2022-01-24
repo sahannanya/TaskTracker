@@ -7,20 +7,7 @@
     android:orientation="vertical"
     tools:context=".MainActivity">
 
-    <!--    <LinearLayout-->
-    <!--        android:id="@+id/space"-->
-    <!--        android:layout_width="match_parent"-->
-    <!--        android:layout_height="wrap_content"-->
-    <!--        android:orientation="vertical"-->
-    <!--        android:weightSum="1">-->
 
-    <!--        <LinearLayout-->
-    <!--            style="?android:attr/buttonBarStyle"-->
-    <!--            android:layout_width="match_parent"-->
-    <!--            android:layout_height="wrap_content"-->
-    <!--            android:layout_weight="0.15"-->
-    <!--            android:orientation="horizontal"-->
-    <!--            android:weightSum="1">-->
 
     <Button
         android:id="@+id/btnStartAlarm"
