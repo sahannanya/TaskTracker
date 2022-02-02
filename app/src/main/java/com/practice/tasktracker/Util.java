@@ -9,7 +9,6 @@ import android.media.AudioManager;
 import android.media.MediaRecorder;
 import android.media.ToneGenerator;
 import android.os.Build;
-import android.os.Environment;
 import android.util.Log;
 
 import androidx.core.app.ActivityCompat;
@@ -26,9 +25,8 @@ public class Util {
     static private final String TAGm="Util";
     static public final String ALARM_RECEIVER_PACKAGE_NAME = "com.practice.tasktracker.MY_ALARM_FINISHED";
     static public final String ALARM_CANCEL_RECEIVER_PACKAGE_NAME = "com.practice.tasktracker.ALARM_CANCEL";
-    //    static public final String RECORDED_DIRECTORY = Environment.getExternalFilesDir().getAbsolutePath() + "/recordedTasks";
-    static public final int PROMPT_INTERVAL_IN_MINUTES = 10;
-    static public final int PROMPT_DURATION_IN_MILLI_SEC = 10 * 1000;
+    static public  int promptIntervalInMinutes = 5;
+    static public  int promptDurationInMiliSeconds = promptIntervalInMinutes * 1000;
 
     public static void playBeepToAlert(){
         Log.d(TAGm, "playBeepToAlert() called");
@@ -38,7 +36,7 @@ public class Util {
 
     public static void startAlarm(AlarmManager alarmManager, PendingIntent pendingIntent, long time){
         Log.d(TAGm, "startAlarm() called. ");
-        long timeInMilliSec = (time == 0) ? incrementTimeByGivenDuration(PROMPT_INTERVAL_IN_MINUTES,0).getTimeInMillis(): time;
+        long timeInMilliSec = (time == 0) ? incrementTimeByGivenDuration(promptIntervalInMinutes,0).getTimeInMillis(): time;
         Log.d(TAGm, "startAlarm() :: next alarm in::"+ timeInMilliSec + " milli secs");
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             AlarmManager.AlarmClockInfo alarmClockInfo = new AlarmManager.AlarmClockInfo(
@@ -52,7 +50,7 @@ public class Util {
             alarmManager.setAlarmClock(alarmClockInfo,pendingIntent);
 
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, timeInMilliSec,1000 * 60 * PROMPT_INTERVAL_IN_MINUTES, pendingIntent);
+            alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, timeInMilliSec,1000 * 60 * promptIntervalInMinutes, pendingIntent);
         } else {
             alarmManager.set(AlarmManager.RTC_WAKEUP, timeInMilliSec, pendingIntent);
         }
@@ -173,6 +171,15 @@ public class Util {
 
         String time = hour%12 + ":" + hour + " " + ((min>=12) ? "PM" : "AM");
         return time;
+    }
+
+    public static void setPromptGap(int gap){
+        Log.d(TAGm, "setPromptGap:: got this gap :: " + gap);
+        promptIntervalInMinutes = gap;
+    }
+
+    public static int getPromptGap(){
+        return promptIntervalInMinutes;
     }
 }
 

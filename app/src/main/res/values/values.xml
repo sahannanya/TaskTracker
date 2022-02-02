@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="duration_array">
+        <item>5 mins</item>
+        <item>10 mins</item>
+        <item>15 mins</item>
+        <item>20 mins</item>
+        <item>25 mins</item>
+        <item>30 mins</item>
+        <item>35 mins</item>
+        <item>40 mins</item>
+        <item>45 mins</item>
+        <item>50 mins</item>
+        <item>55 mins</item>
+        <item>60 mins</item>
+    </string-array>
+</resources>

@@ -10,7 +10,6 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.Color;
 import android.media.MediaRecorder;
 import android.net.Uri;
 import android.os.Build;
@@ -23,7 +22,6 @@ import android.speech.SpeechRecognizer;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
-import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
 
 import com.practice.tasktracker.db.CapturedDataDao;
@@ -34,9 +32,6 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
-import static androidx.core.app.NotificationCompat.PRIORITY_DEFAULT;
-import static androidx.core.app.NotificationCompat.PRIORITY_MIN;
 
 
 public class RecordAndResetAlarmService extends IntentService {
@@ -103,10 +98,11 @@ public class RecordAndResetAlarmService extends IntentService {
                         Log.d(TAGm, "onHandleIntent()  else. ");
                         captureData();
                     }
-                }else if(from.equalsIgnoreCase("rebooted")){
+                } else if(from.equalsIgnoreCase("rebooted")){
                     modifyAlarm("rebooted");
-                }else if(from.equalsIgnoreCase("cancelAlarm")){
+                } else if(from.equalsIgnoreCase("cancelAlarm")){
                     modifyAlarm("cancel");
+                } else if(from.equalsIgnoreCase("resetToNextDay")){
                     modifyAlarm("resetToNextDay");
                 }
             }
@@ -214,7 +210,7 @@ public class RecordAndResetAlarmService extends IntentService {
                                     public void run() {
                                         Util.stopRecording(mr);
                                         insertItemInDB(Calendar.getInstance().getTime().toString()," Captured audio recording");
-                                    }}, Util.PROMPT_DURATION_IN_MILLI_SEC);
+                                    }}, Util.promptDurationInMiliSeconds);
                             }
                         }
 
@@ -226,7 +222,6 @@ public class RecordAndResetAlarmService extends IntentService {
                             if (matches != null){
                                 Log.d(TAGm,"doWork :: onResults :"+matches.get(0));
                                 insertItemInDB(Calendar.getInstance().getTime().toString(),matches.get(0));
-//                            mSpeechRecognizer.stopListening();
                             }
                         }
 
@@ -257,10 +252,8 @@ public class RecordAndResetAlarmService extends IntentService {
                     public void run() {
                         //do something
                         Log.d(TAGm,"doWork :: is this main thread::"+  (Looper.myLooper() == Looper.getMainLooper()));
-//                            mSpeechRecognizer.stopListening();
-//                            Log.d(TAGm,"doWork :: stopListening() called at:: "+ Calendar.getInstance().getTime());
                         modifyAlarm("reset");
-                    }}, Util.PROMPT_DURATION_IN_MILLI_SEC);
+                    }}, Util.promptDurationInMiliSeconds);
             }
         };
         mainHandler.post(myRunnable);
@@ -268,7 +261,7 @@ public class RecordAndResetAlarmService extends IntentService {
 
     public void modifyAlarm(String action){
         //reset alarm
-        Log.d(TAGm, "onHandleIntent() ::resetting alarm ");
+        Log.d(TAGm, "onHandleIntent() ::resetting alarm " + action);
         alarmManager = (AlarmManager)getApplicationContext().getSystemService(Context.ALARM_SERVICE);
         Intent intentTest = new Intent(getBaseContext(), MyBroadCastReceiver.class);
         intentTest.setAction(Util.ALARM_RECEIVER_PACKAGE_NAME);
@@ -279,10 +272,12 @@ public class RecordAndResetAlarmService extends IntentService {
                 break;
             }
             case "cancel" : {
+                Log.d(TAGm , "modifyAlarm called :: cancel triggered");
                 Util.cancelAlarm(alarmManager,pendingIntent);
                 break;
             }
             case "resetToNextDay" : {
+                Log.d(TAGm , "modifyAlarm called :: resetToNextDay triggered");
                 Util.startAlarm(alarmManager, pendingIntent, Util.getStartAlarmTimeInMilliSec(this) + 86400000L);
                 break;
             }

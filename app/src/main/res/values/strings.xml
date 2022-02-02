@@ -4,6 +4,8 @@
     <string name="preference_start_at_min">start_at_min</string>
     <string name="preference_end_at_hour">end_at_hour</string>
     <string name="preference_end_at_min">end_at_min</string>
+    <string name="preference_tracker_is_running">tracker_running</string>
+    <string name="preference_time_gap">tracker_running</string>
 
 
     <string name="app_name">TaskTracker</string>
@@ -15,6 +17,10 @@
     <string name="default_time">Schedule tracking at default hours of the day (7:00AM to 8:00 PM)</string>
     <string name="manual_setting_prompt">Schedule tracking time manually below </string>
     <string name="start_prompt"> Schedule tracking at above set times now</string>
-    <string name="cancel_prompt">Tracking is already on, cancel it now</string>
-<!--    <string name="stopped_tracking">Tracking will be stopped at</string>-->
+    <string name="cancel_prompt">Tracking is already on, press cancel to end it.</string>
+    <string name="duration_prompt">Select time gap in minutes between prompts</string>
+    <string name="error_time">Please select time gap first</string>
+    <string name="error_duration">Please select duration for tracking first!</string>
+    <string name="error_tracking_on">Tracking is already on, Please cancel it first</string>
+    <string name="error_user_help">Please select a valid time-duration and gap between two prompts first, to enable tracking</string>
 </resources>
